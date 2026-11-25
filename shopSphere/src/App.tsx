@@ -10,6 +10,18 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+
+  const [search, setSearch] = useState("");
+const [debouncedSearch, setDebouncedSearch] = useState("");
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [search]);
+
   useEffect(() => {
     Promise.all([getProducts(), getCategories()])
       .then(([products, categories]) => {
@@ -26,8 +38,19 @@ function App() {
   if (loading) return <h2>Loading products...</h2>;
   if (error) return <p>{error}</p>;
 
+  const filteredProducts = products.filter((product) =>
+  product.title.toLowerCase().includes(debouncedSearch.toLowerCase())
+
+);
   return (
     <div className="p-6">
+      <input
+  type="text"
+  placeholder="Search products..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full border rounded-lg p-3 mb-6"
+/>
       <h1 className="text-3xl font-bold mb-6">ShopSphere</h1>
 
       <h2 className="text-xl font-semibold mb-3">Categories</h2>
@@ -44,7 +67,7 @@ function App() {
         Products ({products.length})
       </h2>
 
-      <ProductList products={products} />
+      <ProductList products={filteredProducts} />
     </div>
   );
 }
