@@ -10,18 +10,15 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
   const [search, setSearch] = useState("");
-const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 300);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  return () => clearTimeout(timer);
-}, [search]);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
+  // Fetch products and categories
   useEffect(() => {
     Promise.all([getProducts(), getCategories()])
       .then(([products, categories]) => {
@@ -35,39 +32,123 @@ useEffect(() => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Handle category selection
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((item) => item !== category)
+        : [...prev, category]
+    );
+  };
+
+  // Validate price range
+  const invalidPrice =
+    minPrice !== "" &&
+    maxPrice !== "" &&
+    Number(minPrice) > Number(maxPrice);
+
+  // Filter products
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.title
+      .toLowerCase()
+      .includes(debouncedSearch.toLowerCase());
+
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(product.category);
+
+    const matchesPrice =
+      (minPrice === "" || product.price >= Number(minPrice)) &&
+      (maxPrice === "" || product.price <= Number(maxPrice));
+
+    return matchesSearch && matchesCategory && matchesPrice;
+  });
+
   if (loading) return <h2>Loading products...</h2>;
   if (error) return <p>{error}</p>;
 
-  const filteredProducts = products.filter((product) =>
-  product.title.toLowerCase().includes(debouncedSearch.toLowerCase())
-
-);
   return (
     <div className="p-6">
-      <input
-  type="text"
-  placeholder="Search products..."
-  value={search}
-  onChange={(e) => setSearch(e.target.value)}
-  className="w-full border rounded-lg p-3 mb-6"
-/>
       <h1 className="text-3xl font-bold mb-6">ShopSphere</h1>
 
-      <h2 className="text-xl font-semibold mb-3">Categories</h2>
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search products..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full border rounded-lg p-3 mb-6"
+      />
 
-      <div className="mb-6">
-        {categories.map((category) => (
-          <p key={category} className="capitalize">
-            {category}
-          </p>
-        ))}
+      {/* Categories */}
+      <h2 className="font-semibold mb-3">Categories</h2>
+
+      {categories.map((category) => (
+        <label
+          key={category}
+          className="flex items-center gap-2 mb-2 capitalize"
+        >
+          <input
+            type="checkbox"
+            checked={selectedCategories.includes(category)}
+            onChange={() => handleCategoryChange(category)}
+          />
+          {category}
+        </label>
+      ))}
+
+      {/* Price Range */}
+      <h2 className="font-semibold mt-6 mb-3">Price Range</h2>
+
+      <div className="flex gap-2 mb-2">
+        <input
+          type="number"
+          min="0"
+          placeholder="Min"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+          className="border rounded p-2 w-1/2"
+        />
+
+        <input
+          type="number"
+          min="0"
+          placeholder="Max"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          className="border rounded p-2 w-1/2"
+        />
       </div>
 
-      <h2 className="text-xl font-bold mb-4">
-        Products ({products.length})
-      </h2>
+      {invalidPrice && (
+        <p className="text-red-500 text-sm mb-4">
+          Minimum price cannot exceed maximum price.
+        </p>
+      )}
 
-      <ProductList products={filteredProducts} />
+      {/* Product List */}
+      {invalidPrice ? (
+        <p className="text-red-500 mt-4">
+          Please enter a valid price range.
+        </p>
+      ) : (
+        <>
+          <h2 className="text-xl font-bold mt-6 mb-4">
+            Products ({filteredProducts.length})
+          </h2>
+
+          <ProductList products={filteredProducts} />
+        </>
+      )}
     </div>
   );
 }
