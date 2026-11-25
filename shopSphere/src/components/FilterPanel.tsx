@@ -23,6 +23,7 @@ function FilterPanel({
   onMaxPriceChange,
   onMinRatingChange,
 }: Props) {
+  
   return (
     <div>
       <h2 className="font-semibold mb-3">Categories</h2>

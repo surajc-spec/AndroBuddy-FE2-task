@@ -17,11 +17,33 @@ const VALID_SORTS: SortOption[] = [
   "name-asc",
 ];
 
+const SORT_STORAGE_KEY = "shopsphere_sort";
+
+function hasValidSortParam(value: string | null): value is SortOption {
+  return value !== null && VALID_SORTS.includes(value as SortOption);
+}
+
 function parseSort(value: string | null): SortOption {
-  if (value && VALID_SORTS.includes(value as SortOption)) {
-    return value as SortOption;
+  if (hasValidSortParam(value)) {
+    return value;
   }
   return "relevance";
+}
+
+function getStoredSort(): SortOption {
+  try {
+    return parseSort(localStorage.getItem(SORT_STORAGE_KEY));
+  } catch {
+    return "relevance";
+  }
+}
+
+function saveStoredSort(value: SortOption) {
+  try {
+    localStorage.setItem(SORT_STORAGE_KEY, value);
+  } catch {
+    return;
+  }
 }
 
 function parseRating(value: string | null): number {
@@ -44,7 +66,10 @@ function App() {
   const minPrice = searchParams.get("minPrice") ?? "";
   const maxPrice = searchParams.get("maxPrice") ?? "";
   const minRating = parseRating(searchParams.get("minRating"));
-  const sortBy = parseSort(searchParams.get("sort"));
+  const urlSortParam = searchParams.get("sort");
+  const sortBy = hasValidSortParam(urlSortParam)
+    ? urlSortParam
+    : getStoredSort();
 
   const [search, setSearch] = useState(urlSearch);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -168,6 +193,7 @@ function App() {
   };
 
   const handleSortChange = (value: SortOption) => {
+    saveStoredSort(value);
     const next = new URLSearchParams(searchParams);
     if (value !== "relevance") {
       next.set("sort", value);
@@ -178,6 +204,7 @@ function App() {
   };
 
   const clearAllFilters = () => {
+    saveStoredSort("relevance");
     setSearch("");
     setSearchParams(new URLSearchParams());
   };
