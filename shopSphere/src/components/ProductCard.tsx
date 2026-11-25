@@ -3,9 +3,31 @@ import type { Product } from "../services/api";
 
 interface Props {
   product: Product;
+  searchQuery?: string;
 }
 
-function ProductCard({ product }: Props) {
+function renderHighlightedTitle(title: string, query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return title;
+  }
+
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(${escaped})`, "gi");
+  const parts = title.split(regex);
+
+  return parts.map((part, index) =>
+    part.toLowerCase() === trimmed.toLowerCase() ? (
+      <mark key={index} className="bg-yellow-200 rounded px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
+function ProductCard({ product, searchQuery = "" }: Props) {
   return (
     <div className="border rounded-lg p-4 hover:shadow-md transition">
       <img
@@ -15,7 +37,7 @@ function ProductCard({ product }: Props) {
       />
 
       <h3 className="font-medium text-gray-800 line-clamp-2">
-        {product.title}
+        {renderHighlightedTitle(product.title, searchQuery)}
       </h3>
 
       <p className="text-lg font-bold mt-2">
