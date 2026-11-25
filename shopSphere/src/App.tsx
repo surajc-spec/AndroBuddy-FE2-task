@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { getProducts, getCategories } from "./services/api";
 import type { Product } from "./services/api";
+import ProductList from "./components/ProductList";
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -9,45 +10,41 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-useEffect(() => {
-  Promise.all([getProducts(), getCategories()])
-    .then(([products, categories]) => {
-
-      setProducts(products);
-      setCategories(categories);
-
-    })
-    .catch((err) => {
-
-      console.error(err);
-      setError("Failed to fetch data");
-
-    })
-    .finally(() => setLoading(false));
-}, []);
+  useEffect(() => {
+    Promise.all([getProducts(), getCategories()])
+      .then(([products, categories]) => {
+        setProducts(products);
+        setCategories(categories);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to fetch data");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   if (loading) return <h2>Loading products...</h2>;
   if (error) return <p>{error}</p>;
 
   return (
-    <div>
-      <h1>ShopSphere</h1>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">ShopSphere</h1>
 
-      <h2>Categories</h2>
-      {categories.map((category) => (
-        <p key={category}>{category}</p>
-      ))}
+      <h2 className="text-xl font-semibold mb-3">Categories</h2>
 
-      <h2>Products ({products.length})</h2>
+      <div className="mb-6">
+        {categories.map((category) => (
+          <p key={category} className="capitalize">
+            {category}
+          </p>
+        ))}
+      </div>
 
-      {products.map((product) => (
-        <div key={product.id}>
-          <img src={product.image} alt={product.title} width="120" />
-          <h3>{product.title}</h3>
-          <p>Price: ${product.price}</p>
-          <p>Rating: {product.rating.rate} ⭐</p>
-        </div>
-      ))}
+      <h2 className="text-xl font-bold mb-4">
+        Products ({products.length})
+      </h2>
+
+      <ProductList products={products} />
     </div>
   );
 }
