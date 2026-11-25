@@ -98,10 +98,6 @@ function App() {
     Number(draftMinPrice) > Number(draftMaxPrice);
 
   useEffect(() => {
-    setSearch(urlSearch);
-  }, [urlSearch]);
-
-  useEffect(() => {
     Promise.all([getProducts(), getCategories()])
       .then(([productsData, categoriesData]) => {
         setProducts(productsData);
